@@ -1,13 +1,18 @@
 package com.example.employee_management_api.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Getter
 @Setter
 @Table(name = "adresses")
+@NoArgsConstructor
+@AllArgsConstructor
 
 public class Adress {
 

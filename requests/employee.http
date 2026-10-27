@@ -1,0 +1,14 @@
+GET htthttp://localhost:8080/api/employee/paginate
+
+###
+GET http://localhost:8080/api/employee
+
+
+###
+GET http://localhost:8080/api/employee/onboarding
+
+
+
+
+
+
