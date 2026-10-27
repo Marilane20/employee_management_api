@@ -11,5 +11,5 @@ public record AddressDto(
     String city,
 
     @NotBlank(message = "Le code postal est obligatoire")
-    String postalcod ){
+    String postalcode ){
 }
