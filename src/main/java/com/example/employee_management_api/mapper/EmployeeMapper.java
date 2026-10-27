@@ -1,18 +1,42 @@
 package com.example.employee_management_api.mapper;
 
-import com.example.employee_management_api.dto.AddressDto;
-import com.example.employee_management_api.dto.DepartmentSummaryDto;
-import com.example.employee_management_api.dto.EmployeeResponseDto;
-import com.example.employee_management_api.dto.ProjectSummaryDto;
+import com.example.employee_management_api.dto.*;
 import com.example.employee_management_api.entity.Adress;
+import com.example.employee_management_api.entity.Department;
 import com.example.employee_management_api.entity.Employee;
+import com.example.employee_management_api.entity.Project;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Component
 public class EmployeeMapper {
+
+
+    public Employee toEntity(EmployeeRequestDto dto, Department dept, Employee manager, Set<Project> projects) {
+        if (dto == null) return null;
+
+        Employee employee = new Employee();
+        employee.setEmployeeId(dto.employeeId());
+        employee.setName(dto.name());
+        employee.setEmail(dto.email());
+        employee.setPhone(dto.phone());
+        employee.setJobTitle(dto.jobTitle());
+        employee.setHireDate(dto.hireDate());
+        employee.setSalary(dto.salary());
+
+        // L'adresse est convertie et rattachée ici
+        employee.setAddress(toAddressEntity(dto.address()));
+
+        // Relations résolues par le service
+        employee.setDepartement(dept);
+        employee.setManager(manager);
+        employee.setProjects(projects != null ? projects : Collections.emptySet());
+
+        return employee;
+    }
 
     public EmployeeResponseDto toResponseDto(Employee entity) {
         if (entity == null) return null;

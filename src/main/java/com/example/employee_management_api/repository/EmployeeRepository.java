@@ -23,6 +23,12 @@ public interface EmployeeRepository extends JpaRepository<Employee ,Long> {
 
     Page<Employee> findAll(Pageable pageable);
 
+    boolean existsByEmployeeId(String employeeId);
+
+    boolean existsByEmail(String email);
+
+    boolean existsByPhone(String phone);
+
 
 
 }
