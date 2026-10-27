@@ -1,42 +1,142 @@
 # Employee Management API
 
-API REST d'entreprise développée avec **Java 21** et **Spring Boot 4.x**, dédiée à la gestion des employés, départements et projets d'une organisation. Le projet applique les principes de l'architecture en couches, l'isolation du domaine via des DTOs immuables (Records), la validation stricte des données et la gestion des migrations avec Flyway.
+REST API de gestion des employés, des départements et des projets, développée avec **Java 21**, **Spring Boot**, **Spring Data JPA** et **PostgreSQL**.
 
----
+## Fonctionnalités
 
-## Stack Technique
+- Gestion des employés, départements et projets.
+- Affectation des employés aux projets.
+- Pagination et tri des résultats.
+- Validation des données et gestion centralisée des erreurs.
+- Migrations de base de données avec Flyway.
 
-* **Langage** : Java 21 (LTS)
-* **Framework** : Spring Boot 4.x
-  * Spring Data JPA
-  * Spring Web
-  * Spring Validation (Hibernate Validator)
-* **Base de données** : 
-  * PostgreSQL (Développement / Production)
-  * H2 Database (Tests d'intégration)
-* **Gestion des migrations** : Flyway
-* **Outil de build** : Maven
-* **Outillage** : Lombok
-
----
-
-## Architecture Logicielle & Bonnes Pratiques
-
-Le projet suit une séparation stricte des responsabilités (SOC) :
+## Architecture du projet
 
 ```text
 com.example.employee_management_api
-├── controller     # Points d'entrée REST, validation @Valid, codes HTTP
-├── service        # Logique métier, intégrité transactionnelle (@Transactional)
-├── repository     # Requêtes Spring Data JPA, pagination et requêtes dérivées
-├── entity         # Modèle relationnel JPA (tables SQL)
-├── dto            # Objets de transfert immuables (Java 21 Records)
-├── mapper         # Traduction explicite Entity <-> DTO (sans magie)
-└── exception      # Gestion globale et centralisée des anomalies (@RestControllerAdvice)
+├── controller   # Points d'entrée REST et validation
+├── service      # Logique métier et transactions
+├── repository   # Accès aux données avec Spring Data JPA
+├── entity       # Entités JPA
+├── dto          # Objets de transfert, notamment les records Java 21
+├── mapper       # Conversion entre entités et DTO
+└── exception    # Gestion centralisée des exceptions
+```
 
-Principes Clés ImplémentésIsolation du Domaine : Les entités JPA ne sont jamais exposées directement au client HTTP. Les entrées et sorties passent systématiquement par des DTOs immuables (records).Source de Vérité SQL : Configuration ddl-auto: validate. Les schémas de base de données sont gérés exclusivement par les scripts de migration Flyway.Intégrité Transactionnelle : Transactions optimisées en lecture seule (@Transactional(readOnly = true)) et rollback automatique en écriture en cas d'incident métier.Gestion des Exceptions Centralisée : Réponses standardisées (RFC 7807) avec codes HTTP précis (400 Bad Request, 404 Not Found, 409 Conflict, 422 Unprocessable Entity).Pagination & Tri Optimisés : Utilisation unifiée de Pageable évitant les surcharges mémoire en base de données. Règles Métier ImplémentéesIntégrité Référentielle :Un employé doit obligatoirement être rattaché à un département existant.L'adresse est persistée en cascade via le cycle de vie de l'employé.Gouvernance & Protection des Données :Interdiction de supprimer un département contenant encore des salariés (422 Unprocessable Entity).Interdiction de supprimer un employé s'il est désigné comme superviseur (manager) d'une équipe active.Contrôles d'Unicité :Matricule (employeeId), adresse email et numéro de téléphone uniques par collaborateur.Noms de départements et de projets uniques (insensibles à la casse).🚀 Installation & DémarragePrérequisJava 21 JDK installéDocker ou instance PostgreSQL localeMaven 3.9+1. Configuration de la Base de DonnéesCréez une base PostgreSQL nommée employee_management :SQLCREATE DATABASE employee_management;
-Définissez les variables d'environnement suivantes ou ajustez votre fichier application.yml :Bashexport DB_URL=jdbc:postgresql://localhost:5432/employee_management
+## Principes techniques
+
+- **Séparation du domaine et de l'API :** les entités JPA ne sont pas exposées directement aux clients HTTP.
+- **Gestion du schéma :** `ddl-auto: validate` et migrations Flyway.
+- **Transactions :** `@Transactional(readOnly = true)` pour les lectures adaptées et transactions pour les écritures.
+- **Gestion des erreurs :** `@RestControllerAdvice` et réponses au format Problem Details (RFC 7807), selon la configuration.
+- **Pagination :** utilisation de `Pageable` pour limiter les données chargées.
+
+## Règles métier
+
+- Chaque employé doit être rattaché à un département existant.
+- L'adresse d'un employé est persistée en cascade avec celui-ci.
+- Un département contenant encore des employés ne peut pas être supprimé (`422 Unprocessable Entity`).
+- Un employé qui supervise une équipe active ne peut pas être supprimé.
+- Le matricule (`employeeId`), l'e-mail et le téléphone doivent être uniques.
+- Les noms des départements et des projets sont uniques sans distinction entre majuscules et minuscules.
+
+## Technologies
+
+- Java 21
+- Spring Boot
+- Spring Data JPA / Hibernate
+- PostgreSQL
+- Flyway
+- Maven
+- Docker (facultatif)
+
+## Prérequis
+
+- JDK Java 21
+- Maven 3.9 ou supérieur
+- PostgreSQL local ou accessible
+- Docker, si nécessaire
+
+## Installation et démarrage
+
+### 1. Créer la base de données
+
+```sql
+CREATE DATABASE employee_management;
+```
+
+### 2. Configurer la connexion
+
+**Linux / macOS (Bash)**
+
+```bash
+export DB_URL=jdbc:postgresql://localhost:5432/employee_management
 export DB_USERNAME=postgres
 export DB_PASSWORD=votre_mot_de_passe
-2. Compilation et LancementExécutez les migrations Flyway et démarrez l'application :Bashmvn clean spring-boot:run
-L'API est accessible sur http://localhost:8080/api/v1.📖 Endpoints PrincipauxMéthodeRouteDescriptionCode SuccèsPOST/api/v1/departmentsCréer un département201 CreatedGET/api/v1/departmentsLister les départements (Paginés)200 OKGET/api/v1/departments/{id}Consulter un département (avec ses membres)200 OKDELETE/api/v1/departments/{id}Supprimer un département (si vide)204 No ContentPOST/api/v1/projectsCréer un projet201 CreatedGET/api/v1/projectsLister les projets200 OKPOST/api/v1/projects/{pId}/employees/{eId}Assigner un employé à un projet200 OKPOST/api/v1/employeesEnregistrer un nouvel employé201 CreatedGET/api/v1/employeesRecherche paginée et triée (page, size, sortBy, direction)200 OKGET/api/v1/employees/{id}Consulter le profil complet d'un employé200 OKDELETE/api/v1/employees/{id}Supprimer un employé204 No Content🧪 Tests de l'APIUn fichier exécutable complet est fourni directement à la racine du dépôt :📁 requests/api-tests.httpVous pouvez lancer les tests directement dans IntelliJ IDEA ou VS Code (avec l'extension REST Client) d'un simple clic sur les icônes d'exécution pour valider le flux nominal et les cas d'erreurs (unicité, contraintes métier, suppressions protégées).
+```
+
+**Windows PowerShell**
+
+```powershell
+$env:DB_URL="jdbc:postgresql://localhost:5432/employee_management"
+$env:DB_USERNAME="postgres"
+$env:DB_PASSWORD="votre_mot_de_passe"
+```
+
+Remplacez `votre_mot_de_passe` par votre mot de passe PostgreSQL. Ne publiez jamais vos identifiants réels dans le dépôt.
+
+### 3. Compiler et démarrer
+
+À la racine du projet :
+
+```bash
+mvn clean spring-boot:run
+```
+
+L'API est accessible à l'adresse :
+
+```text
+http://localhost:8080/api/v1
+```
+
+## Endpoints principaux
+
+| Méthode | Route | Description | Succès |
+|---|---|---|---|
+| `POST` | `/api/v1/departments` | Créer un département | `201 Created` |
+| `GET` | `/api/v1/departments` | Lister les départements avec pagination | `200 OK` |
+| `GET` | `/api/v1/departments/{id}` | Consulter un département et ses membres | `200 OK` |
+| `DELETE` | `/api/v1/departments/{id}` | Supprimer un département vide | `204 No Content` |
+| `POST` | `/api/v1/projects` | Créer un projet | `201 Created` |
+| `GET` | `/api/v1/projects` | Lister les projets | `200 OK` |
+| `POST` | `/api/v1/projects/{pId}/employees/{eId}` | Affecter un employé à un projet | `200 OK` |
+| `POST` | `/api/v1/employees` | Créer un employé | `201 Created` |
+| `GET` | `/api/v1/employees` | Rechercher les employés avec pagination et tri | `200 OK` |
+| `GET` | `/api/v1/employees/{id}` | Consulter le profil d'un employé | `200 OK` |
+| `DELETE` | `/api/v1/employees/{id}` | Supprimer un employé autorisé | `204 No Content` |
+
+Les paramètres de pagination et de tri peuvent inclure `page`, `size`, `sortBy` et `direction`, selon l'implémentation.
+
+## Codes HTTP
+
+| Code | Signification |
+|---|---|
+| `200 OK` | Requête exécutée avec succès |
+| `201 Created` | Ressource créée |
+| `204 No Content` | Opération réussie sans contenu de réponse |
+| `400 Bad Request` | Requête invalide ou échec de validation |
+| `404 Not Found` | Ressource introuvable |
+| `409 Conflict` | Conflit, par exemple une valeur unique déjà utilisée |
+| `422 Unprocessable Entity` | Règle métier non respectée |
+
+## Tests de l'API
+
+Le fichier de requêtes HTTP se trouve ici :
+
+```text
+requests/api-tests.http
+```
+
+Exécutez les requêtes depuis IntelliJ IDEA ou VS Code avec l'extension **REST Client** pour tester les parcours nominaux et les cas d'erreur, notamment les contraintes d'unicité et les suppressions interdites.
+
+---
